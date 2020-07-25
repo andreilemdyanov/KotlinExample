@@ -6,18 +6,14 @@ import java.lang.IllegalArgumentException
 object UserHolder {
     private val map = mutableMapOf<String, User>()
 
-    fun getMap() = map
-
     fun registerUser(
         fullName: String,
         email: String,
         password: String
     ): User {
-        return User.makeUser(fullName, email = email, password = password)
-            .also { user ->
-                if (map[user.login] != null) throw IllegalArgumentException("A user with this email already exists ")
-                else map[user.login] = user
-            }
+        return if (map[email.toLowerCase()] != null) throw IllegalArgumentException("A user with this email already exists ")
+        else User.makeUser(fullName, email = email, password = password)
+            .also { user -> map[user.login] = user }
     }
 
     fun loginUser(login: String, password: String): String? {
@@ -25,6 +21,31 @@ object UserHolder {
             if (checkPassword(password)) this.userInfo
             else null
         }
+    }
+
+    fun registerUserByPhone(fullName: String, rawPhone: String): User {
+        return if (map[rawPhone] != null) throw IllegalArgumentException("A user with this phone already exists")
+        else User.makeUser(fullName, phone = rawPhone)
+            .also { user ->
+                if (user.phone?.length != 12) throw IllegalArgumentException("Enter a valid phone number starting with a + and containing 11 digits")
+                map[rawPhone] = user
+            }
+    }
+
+    fun requestAccessCode(login: String): Unit {
+        map[login]?.generateNewAccessCode()
+    }
+
+    fun importUsers(list: List<String>): List<User> {
+        val users = ArrayList<User>()
+        for (userData in list) {
+            userData.split(";").apply {
+                    users.add(User.makeUser(fullName = this[0], email = this[1], completePassword = this[2], phone = this[3]).also {
+                        map[it.login] = it
+                    })
+            }
+        }
+        return users
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)

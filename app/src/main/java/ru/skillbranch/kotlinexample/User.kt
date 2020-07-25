@@ -1,8 +1,6 @@
 package ru.skillbranch.kotlinexample
 
 import androidx.annotation.VisibleForTesting
-import java.lang.IllegalArgumentException
-import java.lang.StringBuilder
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -24,19 +22,18 @@ class User private constructor(
             .map { it.first().toUpperCase() }
             .joinToString(" ")
 
-    private var phone: String? = null
+    internal var phone: String? = null
         set(value) {
-            field = value?.replace("[^+\\d]".toRegex(), "")
+            if (!value.isNullOrBlank())
+                field = value.replace("[^+\\d]".toRegex(), "")
         }
     private var _login: String? = null
     internal var login: String
         set(value) {
-            _login = value?.toLowerCase()
+            _login = value.toLowerCase()
         }
         get() = _login!!
-    private val salt: String by lazy {
-        ByteArray(16).also { SecureRandom().nextBytes(it) }.toString()
-    }
+    private var salt: String
     private lateinit var passwordHash: String
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
@@ -66,6 +63,21 @@ class User private constructor(
         sendAccessCodeToUser(rawPhone, code)
     }
 
+    //    for csv
+    constructor(
+        firstName: String,
+        lastName: String?,
+        email: String?,
+        salt: String,
+        password: String,
+        phone: String?
+    ) : this(firstName, lastName, email = email, meta = mapOf("src" to "csv")) {
+        println("Secondary mail constructor")
+        this@User.salt = salt
+        passwordHash = password
+        this@User.phone = phone
+    }
+
 
     init {
         println("First init block, primary constructor was called")
@@ -75,6 +87,8 @@ class User private constructor(
 
         phone = rawPhone
         login = email ?: phone!!
+
+        salt = ByteArray(16).also { SecureRandom().nextBytes(it) }.toString()
 
         userInfo = """
             firstName: $firstName
@@ -95,7 +109,9 @@ class User private constructor(
         else throw IllegalArgumentException("The entered password does not match the current password")
     }
 
-    private fun encrypt(password: String): String = salt.plus(password).md5()
+    private fun encrypt(password: String): String {
+        return salt.plus(password).md5()
+    }
 
     private fun generateAccessCode(): String {
         val possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -107,6 +123,13 @@ class User private constructor(
                 }
             }
         }.toString()
+    }
+
+    internal fun generateNewAccessCode(): String {
+        val code = generateAccessCode()
+        passwordHash = encrypt(code)
+        accessCode = code
+        return accessCode.toString()
     }
 
     private fun sendAccessCodeToUser(phone: String, code: String) {
@@ -125,12 +148,24 @@ class User private constructor(
             fullName: String,
             email: String? = null,
             password: String? = null,
-            phone: String? = null
+            phone: String? = null,
+            completePassword: String? = null
         ): User {
             val (firstName, lastName) = fullName.fullNameToPair()
 
             return when {
-                !phone.isNullOrBlank() -> User(firstName, lastName)
+                completePassword != null -> {
+                    val (salt, pass) = completePassword.saltAndPassToPair()
+                    User(
+                        firstName,
+                        lastName,
+                        email,
+                        salt,
+                        pass,
+                        phone
+                    )
+                }
+                !phone.isNullOrBlank() -> User(firstName, lastName, rawPhone = phone)
                 !email.isNullOrBlank() && !password.isNullOrBlank() -> User(
                     firstName,
                     lastName,
@@ -149,17 +184,19 @@ class User private constructor(
                     when (size) {
                         1 -> first() to null
                         2 -> first() to last()
-                        else -> throw IllegalArgumentException("Fullname must contains only first name anf last name, current split result $this@fullNameToPair ")
+                        else -> throw IllegalArgumentException("Fullname must contains only first name and last name, current split result $this@fullNameToPair ")
                     }
                 }
 
         }
+
+        private fun String.saltAndPassToPair(): Pair<String, String> {
+            return this.split(":")
+                .filter { it.isNotBlank() }
+                .run { first() to last() }
+        }
     }
 
-}
-
-fun main() {
-    println(UserHolder.getMap()["bob"])
 }
 
 
