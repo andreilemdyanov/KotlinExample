@@ -11,7 +11,7 @@ object UserHolder {
         email: String,
         password: String
     ): User {
-        return if (map[email.toLowerCase()] != null) throw IllegalArgumentException("A user with this email already exists ")
+        return if (map[email.toLowerCase()] != null) throw IllegalArgumentException("A user with this email already exists")
         else User.makeUser(fullName, email = email, password = password)
             .also { user -> map[user.login] = user }
     }
@@ -27,7 +27,6 @@ object UserHolder {
         return if (map[rawPhone] != null) throw IllegalArgumentException("A user with this phone already exists")
         else User.makeUser(fullName, phone = rawPhone)
             .also { user ->
-                if (user.phone?.length != 12) throw IllegalArgumentException("Enter a valid phone number starting with a + and containing 11 digits")
                 map[rawPhone] = user
             }
     }

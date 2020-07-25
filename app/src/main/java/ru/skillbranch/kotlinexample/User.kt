@@ -12,7 +12,7 @@ class User private constructor(
     rawPhone: String? = null,
     meta: Map<String, Any>? = null
 ) {
-    val userInfo: String
+    var userInfo: String
     private val fullName: String
         get() = listOfNotNull(firstName, lastName)
             .joinToString(" ")
@@ -22,10 +22,13 @@ class User private constructor(
             .map { it.first().toUpperCase() }
             .joinToString(" ")
 
-    internal var phone: String? = null
+    private var phone: String? = null
         set(value) {
-            if (!value.isNullOrBlank())
+            if (!value.isNullOrBlank()) {
                 field = value.replace("[^+\\d]".toRegex(), "")
+                if (value.length != 12) throw IllegalArgumentException("Enter a valid phone number starting with a + and containing 11 digits")
+                field = value
+            }
         }
     private var _login: String? = null
     internal var login: String
@@ -76,6 +79,16 @@ class User private constructor(
         this@User.salt = salt
         passwordHash = password
         this@User.phone = phone
+        userInfo = """
+            firstName: $firstName
+            lastName: $lastName
+            login: $login
+            fullName: $fullName
+            initials: $initials
+            email: $email
+            phone: $phone
+            meta: {src=csv}
+        """.trimIndent()
     }
 
 
@@ -196,10 +209,7 @@ class User private constructor(
                 .run { first() to last() }
         }
     }
-
 }
-
-
 
 
 
