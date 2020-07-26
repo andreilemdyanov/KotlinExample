@@ -77,24 +77,14 @@ class User private constructor(
         println("Secondary mail constructor")
         this@User.salt = salt
         passwordHash = password
-        userInfo = """
-            firstName: $firstName
-            lastName: $lastName
-            login: $login
-            fullName: $fullName
-            initials: $initials
-            email: $email
-            phone: $phone
-            meta: {src=csv}
-        """.trimIndent()
     }
 
 
     init {
         println("First init block, primary constructor was called")
 
-        check(!firstName.isBlank()) { "FirstName must be not blank" }
-        check(email.isNullOrBlank() || rawPhone.isNullOrBlank()) { "Email or phone must be not blank" }
+        check(firstName.isNotBlank()) { "FirstName must be not blank" }
+        check(!email.isNullOrBlank() || !rawPhone.isNullOrBlank()) { "Email or phone must be not blank" }
 
         phone = rawPhone
         login = email ?: phone!!
