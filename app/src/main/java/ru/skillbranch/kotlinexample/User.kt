@@ -49,6 +49,7 @@ class User private constructor(
     ) : this(firstName, lastName, email = email, meta = mapOf("auth" to "password")) {
         println("Secondary mail constructor")
         passwordHash = encrypt(password)
+        phone = null
     }
 
     // for phone
