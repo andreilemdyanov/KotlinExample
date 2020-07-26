@@ -42,9 +42,9 @@ object UserHolder {
             userData.split(";").apply {
                 users.add(User.makeUser(
                     fullName = this[0],
-                    email = if (this[1].isBlank()) null else this[1],
-                    completePassword = if (this[2].isBlank()) null else this[2],
-                    phone = if (this[3].isBlank()) null else this[3]
+                    email = this[1].isBlankThenNull(),
+                    completePassword = this[2].isBlankThenNull(),
+                    phone = this[3].isBlankThenNull()
                 )
                     .also {
                         map[it.login] = it

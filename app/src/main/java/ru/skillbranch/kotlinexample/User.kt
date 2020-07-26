@@ -73,11 +73,10 @@ class User private constructor(
         salt: String,
         password: String,
         phone: String?
-    ) : this(firstName, lastName, email = email, meta = mapOf("src" to "csv")) {
+    ) : this(firstName, lastName, email = email, rawPhone = phone, meta = mapOf("src" to "csv")) {
         println("Secondary mail constructor")
         this@User.salt = salt
         passwordHash = password
-        this@User.phone = phone
         userInfo = """
             firstName: $firstName
             lastName: $lastName
@@ -155,6 +154,10 @@ class User private constructor(
         return hexString.padStart(32, '0')
     }
 
+    override fun toString(): String {
+        return "User(firstName='$firstName', lastName=$lastName, userInfo='$userInfo', phone=$phone, _login=$_login, salt='$salt', passwordHash='$passwordHash', accessCode=$accessCode)"
+    }
+
     companion object Factory {
         fun makeUser(
             fullName: String,
@@ -210,5 +213,8 @@ class User private constructor(
     }
 }
 
+fun String.isBlankThenNull(): String? {
+    return if(this.isBlank()) null else this
+}
 
 
