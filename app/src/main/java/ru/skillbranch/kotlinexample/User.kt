@@ -22,12 +22,10 @@ class User private constructor(
             .map { it.first().toUpperCase() }
             .joinToString(" ")
 
-    private var phone: String? = null
+    internal var phone: String? = null
         set(value) {
             if (!value.isNullOrBlank()) {
                 field = value.replace("[^+\\d]".toRegex(), "")
-                if (value.length != 12) throw IllegalArgumentException("Enter a valid phone number starting with a + and containing 11 digits")
-                field = value
             }
         }
     private var _login: String? = null
